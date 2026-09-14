@@ -1,0 +1,14 @@
+{
+  "source_url": "https://www.douyin.com/video/0000000000000000000",
+  "canonical_url": "https://www.douyin.com/video/0000000000000000000",
+  "video_id": "0000000000000000000",
+  "platform": "抖音",
+  "title": "测试视频",
+  "author": { "nickname": "测试作者" },
+  "duration": 9,
+  "segments": [
+    { "start": 0, "end": 3, "text": "你知道怎么整理视频吗" },
+    { "start": 3, "end": 6, "text": "先得到带时间码的字幕" },
+    { "start": 6, "end": 9, "text": "然后按自己的定义拆解" }
+  ]
+}

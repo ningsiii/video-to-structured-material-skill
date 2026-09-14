@@ -1,0 +1,4 @@
+interface:
+  display_name: "Video to Structured Material"
+  short_description: "Turn videos into traceable custom material tables"
+  default_prompt: "Use $video-to-structured-material to turn this video into SRT, structured JSON, and an Excel workbook using my own breakdown definitions."

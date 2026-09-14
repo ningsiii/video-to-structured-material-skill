@@ -1,0 +1,13 @@
+{
+  "schemaVersion": 1,
+  "summary": "说明如何把视频变成可复用的结构化材料。",
+  "cleanedCues": [
+    { "cueIndex": 0, "text": "你知道怎么整理视频吗？", "uncertainty": "" },
+    { "cueIndex": 1, "text": "先得到带时间码的字幕。", "uncertainty": "" },
+    { "cueIndex": 2, "text": "然后按自己的定义拆解。", "uncertainty": "" }
+  ],
+  "sections": [
+    { "id": "section_1", "categoryId": "opening", "title": "提出问题", "startCue": 0, "endCue": 0, "summary": "提出视频整理问题。", "confidence": 0.96, "uncertainty": "" },
+    { "id": "section_2", "categoryId": "main-point", "title": "给出方法", "startCue": 1, "endCue": 2, "summary": "先获得字幕，再按用户定义拆解。", "confidence": 0.94, "uncertainty": "" }
+  ]
+}

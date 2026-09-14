@@ -1,0 +1,23 @@
+{
+  "id": "user-defined-video-breakdown",
+  "name": "示例：由使用者定义的视频拆解",
+  "version": "1.0.0",
+  "language": "zh-CN",
+  "categories": [
+    {
+      "id": "opening",
+      "label": "开场",
+      "definition": "建立观看情境、提出问题或说明接下来内容的片段。"
+    },
+    {
+      "id": "main-point",
+      "label": "主要内容",
+      "definition": "解释核心观点、方法、步骤或案例的片段。"
+    },
+    {
+      "id": "closing",
+      "label": "收束",
+      "definition": "总结、补充边界或说明下一步行动的片段。"
+    }
+  ]
+}
