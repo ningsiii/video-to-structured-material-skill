@@ -114,7 +114,7 @@ export function normalizeSource(value, inputPath = '') {
       stats: value.stats ?? null
     },
     rawCues,
-    inputPath: inputPath ? basename(String(inputPath)) : '',
+    inputPath: inputPath ? basename(String(inputPath).replace(/\\/g, '/')) : '',
     sourceHash: createHash('sha256').update(JSON.stringify(value)).digest('hex')
   };
 }
