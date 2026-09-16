@@ -1,6 +1,6 @@
 {
   "name": "video-to-structured-material-skill",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "private": true,
   "type": "module",
   "description": "Turn public video links or transcript JSON into traceable SRT, custom breakdown JSON, Excel, and optional Feishu sheets.",

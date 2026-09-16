@@ -1,4 +1,5 @@
 import { createHash } from 'node:crypto';
+import { basename } from 'node:path';
 
 export function normalizeVideoInput(input) {
   const matches = String(input).match(/https?:\/\/[^\s<>"']+/gi) || [];
@@ -9,6 +10,64 @@ export function normalizeVideoInput(input) {
     if (modalId && /^\d+$/.test(modalId)) return `https://www.douyin.com/video/${modalId}`;
   }
   return parsed.toString();
+}
+
+export function sanitizePublicSourceUrl(input) {
+  if (input === null || input === undefined || input === '') return null;
+  let parsed;
+  try { parsed = new URL(String(input)); }
+  catch { return String(input); }
+  parsed.hash = '';
+  const host = parsed.hostname.toLowerCase();
+  if (/(^|\.)douyin\.com$/.test(host)) {
+    const modalId = parsed.searchParams.get('modal_id');
+    if (modalId && /^\d+$/.test(modalId)) return `https://www.douyin.com/video/${modalId}`;
+    parsed.search = '';
+  } else if (/(^|\.)(xiaohongshu\.com|xhslink\.com|xhslink\.cn)$/.test(host)) {
+    parsed.search = '';
+  } else {
+    for (const key of [...parsed.searchParams.keys()]) {
+      if (/^(utm_.+|spm_id_from|share_(source|medium|plat|session_id|tag)|shareToken|timestamp|source)$/i.test(key)) {
+        parsed.searchParams.delete(key);
+      }
+    }
+  }
+  return parsed.toString();
+}
+
+export function sourceIdentityFromUrl(input) {
+  const parsed = new URL(String(input));
+  const host = parsed.hostname.toLowerCase();
+  const pathIds = [
+    /\/video\/(\d+)/i,
+    /\/(?:discovery\/item|explore|note)\/([a-z0-9_-]+)/i,
+    /\/video\/([a-z0-9_-]+)/i
+  ];
+  const contentId = parsed.searchParams.get('modal_id') || pathIds.map((pattern) => parsed.pathname.match(pattern)?.[1]).find(Boolean) || null;
+  let platform = host.replace(/^www\./, '').split('.')[0] || 'video';
+  if (host.includes('douyin.com')) platform = 'douyin';
+  else if (host.includes('xiaohongshu.com') || host.includes('xhslink.')) platform = 'xiaohongshu';
+  else if (host.includes('bilibili.com') || host === 'b23.tv') platform = 'bilibili';
+  else if (host.includes('kuaishou.com')) platform = 'kuaishou';
+  else if (host.includes('weibo.com')) platform = 'weibo';
+  return { platform, contentId, originalUrl: input };
+}
+
+export function deriveMaterialSlug(source, fallbackSeed = '') {
+  const platformAliases = new Map([
+    ['抖音', 'douyin'], ['小红书', 'xiaohongshu'], ['哔哩哔哩', 'bilibili'],
+    ['快手', 'kuaishou'], ['微博', 'weibo']
+  ]);
+  const platformValue = String(source?.platform || 'video').trim().toLowerCase();
+  const platform = (platformAliases.get(platformValue) || platformValue)
+    .replace(/[^a-z0-9_-]+/g, '-')
+    .replace(/^-+|-+$/g, '') || 'video';
+  const rawId = String(source?.contentId || '').trim();
+  const contentId = rawId.replace(/[^a-z0-9_-]+/gi, '-').replace(/^-+|-+$/g, '').slice(0, 80);
+  const suffix = contentId || createHash('sha256')
+    .update(String(source?.canonicalUrl || source?.originalUrl || fallbackSeed || 'material'))
+    .digest('hex').slice(0, 12);
+  return `${platform}-${suffix}`;
 }
 
 export function readProfile(value) {
@@ -43,8 +102,8 @@ export function normalizeSource(value, inputPath = '') {
   }
   return {
     source: {
-      originalUrl: value.source_url ?? value.originalUrl ?? value.url ?? null,
-      canonicalUrl: value.canonical_url ?? value.canonicalUrl ?? value.source_url ?? null,
+      originalUrl: sanitizePublicSourceUrl(value.source_url ?? value.originalUrl ?? value.url ?? null),
+      canonicalUrl: sanitizePublicSourceUrl(value.canonical_url ?? value.canonicalUrl ?? value.source_url ?? value.originalUrl ?? value.url ?? null),
       platform: value.platform ?? null,
       contentId: value.video_id ?? value.contentId ?? null,
       title: value.title ?? null,
@@ -55,7 +114,7 @@ export function normalizeSource(value, inputPath = '') {
       stats: value.stats ?? null
     },
     rawCues,
-    inputPath,
+    inputPath: inputPath ? basename(String(inputPath)) : '',
     sourceHash: createHash('sha256').update(JSON.stringify(value)).digest('hex')
   };
 }

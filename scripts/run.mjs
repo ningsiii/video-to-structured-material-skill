@@ -4,7 +4,7 @@ import { existsSync } from 'node:fs';
 import { basename, delimiter, dirname, join, resolve } from 'node:path';
 import { spawn } from 'node:child_process';
 import process from 'node:process';
-import { buildAnalysisRequest, materializeResult, normalizeSource, normalizeVideoInput, readProfile, serializeSrt, validateAnalysis } from './lib/core.mjs';
+import { buildAnalysisRequest, deriveMaterialSlug, materializeResult, normalizeSource, normalizeVideoInput, readProfile, serializeSrt, sourceIdentityFromUrl, validateAnalysis } from './lib/core.mjs';
 import { writeWorkbook } from './lib/ooxml-workbook.mjs';
 
 const args = process.argv.slice(2);
@@ -14,17 +14,20 @@ const url = value('--url');
 const normalizedUrl = url ? normalizeVideoInput(url) : undefined;
 const sourceJson = value('--source-json');
 const profilePath = resolve(value('--profile') || 'profiles/example.json');
-const output = resolve(value('--output') || 'output');
+const requestedOutput = value('--output');
 const analysisPath = value('--analysis-json');
 if ((!url && !sourceJson) || (url && sourceJson)) {
   console.error('Provide exactly one of --url or --source-json.'); process.exit(2);
 }
 
-await mkdir(output, { recursive: true });
 const profile = readProfile(JSON.parse(await readFile(profilePath, 'utf8')));
 let acquiredPath = sourceJson ? resolve(sourceJson) : undefined;
 let runtimeOutput;
+let normalized;
+let output;
 if (url) {
+  output = resolve(requestedOutput || join('output', deriveMaterialSlug(sourceIdentityFromUrl(normalizedUrl), normalizedUrl)));
+  await mkdir(output, { recursive: true });
   const runtime = resolve('.runtime/video-batch-download');
   const script = join(runtime, 'scripts', 'download.mjs');
   if (!existsSync(script)) throw new Error('Video tool is not installed. Run npm run setup:video first.');
@@ -39,9 +42,13 @@ if (url) {
   const summary = JSON.parse(await readFile(join(runtimeOutput, 'download-summary.json'), 'utf8'));
   acquiredPath = summary.results?.find((item) => item.jsonPath)?.jsonPath;
   if (!acquiredPath) throw new Error('Video acquisition did not produce a transcript JSON result.');
+  normalized = normalizeSource(JSON.parse(await readFile(acquiredPath, 'utf8')), acquiredPath);
+} else {
+  normalized = normalizeSource(JSON.parse(await readFile(acquiredPath, 'utf8')), acquiredPath);
+  output = resolve(requestedOutput || join('output', deriveMaterialSlug(normalized.source, acquiredPath)));
+  await mkdir(output, { recursive: true });
 }
 
-const normalized = normalizeSource(JSON.parse(await readFile(acquiredPath, 'utf8')), acquiredPath);
 const normalizedSourcePath = join(output, 'source-normalized.json');
 await writeFile(normalizedSourcePath, JSON.stringify({
   ...normalized.source,
@@ -62,7 +69,7 @@ if (analysisPath) {
   await writeFile(join(output, 'analysis-response.json'), JSON.stringify(analysis, null, 2));
 } else {
   if (url && runtimeOutput && !has('--keep-runtime-output')) await rm(runtimeOutput, { recursive: true, force: true });
-  console.error(`Analysis request created at ${requestPath}. Use the Agent to produce analysis-response.json, then rerun with --source-json "${normalizedSourcePath}" --analysis-json <analysis-response.json>.`);
+  console.error(`Analysis request created at ${requestPath}. Use the Agent to produce analysis-response.json, then rerun with --source-json "${normalizedSourcePath}" --profile "${profilePath}" --output "${output}" --analysis-json <analysis-response.json>.`);
   process.exit(3);
 }
 analysis = validateAnalysis(analysis, normalized, profile);

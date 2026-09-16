@@ -1,4 +1,6 @@
-# Feishu destination
+# Feishu spreadsheet destination
+
+This adapter imports one finished `.xlsx` file as one new, ordinary Feishu spreadsheet. It does not append to an existing spreadsheet and does not create or update Feishu Bitable records.
 
 Use the official open-source `@larksuite/cli`; do not implement or persist OAuth tokens in this Skill.
 
@@ -29,3 +31,5 @@ lark-cli drive +import --type sheet --as user --file ./materials.xlsx
 ```
 
 If an organization requires application approval or additional scopes, report the exact missing permission and stop. Do not request broader scopes than the destination needs.
+
+For a persistent cross-video library, existing-sheet append, or Bitable workflow, build a separate destination adapter against `result.json`; do not imply that this import command already provides those behaviors.
